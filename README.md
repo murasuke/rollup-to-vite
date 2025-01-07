@@ -15,8 +15,80 @@ npm i react react-dom
 npm i -D @types/react @types/react-dom typescript
 ```
 
+```json:tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
 
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+}
 
+```
+
+```tsx:Counter.tsx
+import React, { useState } from 'react';
+
+type CounterProps = {
+  initialCount?: number;
+};
+
+const Counter: React.FC<CounterProps> = ({ initialCount = 0 }) => {
+  const [count, setCount] = useState(initialCount);
+
+  const increment = () => {
+    setCount(count + 1);
+  };
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={increment}>Increment</button>
+    </div>
+  );
+};
+
+export default Counter;
+
+```
+
+```tsx:main.tsx
+import ReactDOM from 'react-dom/client';
+import Counter from './Counter';
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Counter />);
+
+```
+
+動作確認用html
+
+* `index.html`はviteの開発サーバーがエントリーポイントとして使うため、rollup用に分けて作成する
+
+```html:index-rollup.html
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>React Rollup test</title>
+    <script defer src="./dist/bundle.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
+```
 
 ### rollup.jsでReactのビルド環境を作成する
 
@@ -33,17 +105,15 @@ import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
 
 export default {
-  input: 'src/lib.ts', // ビルドのエントリーポイント
+  input: 'src/main.tsx', // ビルドのエントリーポイント
   output: [
     {
-      // esmodule
-      file: 'dist/bundle.esm.js', // 出力ファイル名
+      file: 'dist/bundle.js', // 出力ファイル名
       format: 'esm',
       sourcemap: true,
     },
   ],
   plugins: [
-    peerDepsExternal(),
     resolve(),
     commonjs(),
     replace({
@@ -51,31 +121,90 @@ export default {
       preventAssignment: true,
     }),
     typescript({
-      tsconfig: 'tsconfig.app.json',  // TypeScriptの設定(viteの設定ファイルを読み込む)
-      compilerOptions: { // 上記設定ファイルから一部設定を変更する
-        outDir: "dist",
-        declaration: true,　// 型定義ファイルを作成する
-        declarationDir: "dist",
-        allowImportingTsExtensions: false,
-      },
-      exclude : [ // 対象外ファイル
-        "node_modules",
-        "dist",
-        "build",
-        "src/main.tsx",
-        "src/App.tsx",
-      ]
+      tsconfig: 'tsconfig.json',
     }),
   ],
 };
-```
-
-Counter.tsx
 
 ```
+
+```json:package.json
+  "scripts": {
+    "build": "rollup -c"
+  },
 ```
 
-App.tsx
+### ビルド＆実行
+
+```bash
+$ npm run build
+$ npx http-server .
+```
+
+![alt text](./img/image.png)
+
+
+## vite環境を導入する
+
+### Viteのインストール
 
 ```
+npm i -D vite @vitejs/plugin-react
+```
+
+### Vite設定ファイルの作成
+
+```js:vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+});
+
+```
+
+package.jsonに開発サーバーを起動するためのスクリプトを追加
+
+```json:package.json
+  "scripts": {
+    "dev": "vite",
+  },
+```
+
+viteの開発サーバーから起動するためのファイルを作成する
+
+* 「src=""」は`/`からエントリーポイントとなるファイルのパスを記載する
+
+```html:index.html
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>React Vite test</title>
+    <script type="module" src="/src/main.tsx"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
+```
+
+### 開発サーバーを起動する
+
+```
+$npm run dev
+$ npm run dev
+
+> rollup-to-vite@1.0.0 dev
+> vite
+
+
+  VITE v6.0.7  ready in 178 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
 ```
