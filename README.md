@@ -9,6 +9,10 @@
 
 通常はViteを導入後、必要があればrollup.jsのビルド環境を整えますが順番を逆にします
 
+* ファイル一覧
+![image](https://github.com/user-attachments/assets/0d1d126f-02de-4613-b675-2d09cc4c1dba)
+
+
 ### ReactでCounterコンポーネントを作成する
 ```bash
 npm i react react-dom
